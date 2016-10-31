@@ -23,23 +23,12 @@ import (
 const (
 	UrlTwitterTokenUrlRedirect = "/api/v1/twitter/tokenurl/redirect"
 	UrlTwitterTokenCallback    = "/api/v1/twitter/tokenurl/callback"
-
-	UrlBlobRequestUrl      = "/api/v1/blob/requesturl"
-	UrlBlobCallback        = "/api/v1/blob/callback"
-	UrlBlobGet             = "/api/v1/blob/get"
-	UrlUserGet             = "/api/v1/user/get"
-	UrlUserFind            = "/api/v1/user/find"
-	UrlUserBlobGet         = "/api/v1/user/getblob"
-	UrlUserRequestBlobUrl  = "/api/v1/user/requestbloburl"
-	UrlUserCallbackBlobUrl = "/api/v1/user/callbackbloburl"
-	UrlMeLogout            = "/api/v1/me/logout"
-	UrlArtNew              = "/api/v1/art/new"
-	UrlArtUpdate           = "/api/v1/art/update"
-	UrlArtFind             = "/api/v1/art/find"
-	UrlArtGet              = "/api/v1/art/get"
-	UrlArtBlobGet          = "/api/v1/art/getblob"
-	UrlArtRequestBlobUrl   = "/api/v1/art/requestbloburl"
-	UrlArtCallbackBlobUrl  = "/api/v1/art/callbackbloburl"
+	UrlUserGet                 = "/api/v1/user/get"
+	UrlUserFind                = "/api/v1/user/find"
+	UrlUserBlobGet             = "/api/v1/user/getblob"
+	UrlUserRequestBlobUrl      = "/api/v1/user/requestbloburl"
+	UrlUserCallbackBlobUrl     = "/api/v1/user/callbackbloburl"
+	UrlMeLogout                = "/api/v1/me/logout"
 )
 
 var twitterHandlerObj *twitter.TwitterHandler = nil
@@ -51,20 +40,6 @@ func CheckLogin(r *http.Request, input *miniprop.MiniProp) minisession.CheckLogi
 	return GetUserHundlerObj(ctx).GetSessionMgr().CheckLoginId(ctx, token, minisession.MakeAccessTokenConfigFromRequest(r))
 }
 
-func GetTwitterHandlerObj(ctx context.Context) *twitter.TwitterHandler {
-	if twitterHandlerObj == nil {
-		twitterHandlerObj = GetUserHundlerObj(ctx).GetTwitterHandlerObj(ctx, //
-			twitter.TwitterOAuthConfig{
-				ConsumerKey:       TwitterConsumerKey,
-				ConsumerSecret:    TwitterConsumerSecret,
-				AccessToken:       TwitterAccessToken,
-				AccessTokenSecret: TwitterAccessTokenSecret,
-				CallbackUrl:       "http://" + appengine.DefaultVersionHostname(ctx) + "" + UrlTwitterTokenCallback,
-				SecretSign:        appengine.VersionID(ctx),
-			})
-	}
-	return twitterHandlerObj
-}
 func GetUserHundlerObj(ctx context.Context) *userhundler.UserHandler {
 	if userHandlerObj == nil {
 		userHandlerObj = userhundler.NewUserHandler(UrlUserCallbackBlobUrl,
@@ -73,15 +48,23 @@ func GetUserHundlerObj(ctx context.Context) *userhundler.UserHandler {
 				UserKind:    "user",
 				RelayIdKind: "relayId",
 				SessionKind: "session",
-			}, userhundler.UserHandlerOnEvent{
-				BlobOnEvent: blobhandler.BlobHandlerOnEvent{
-					OnBlobRequest: func(w http.ResponseWriter, r *http.Request, input *miniprop.MiniProp, output *miniprop.MiniProp, h *blobhandler.BlobHandler) (string, map[string]string, error) {
-						ret := CheckLogin(r, input)
-						if ret.IsLogin == false {
-							return "", map[string]string{}, errors.New("Failed in token check")
-						}
-						return ret.AccessTokenObj.GetLoginId(), map[string]string{}, nil
-					},
+			}, //
+			twitter.TwitterOAuthConfig{
+				ConsumerKey:       TwitterConsumerKey,
+				ConsumerSecret:    TwitterConsumerSecret,
+				AccessToken:       TwitterAccessToken,
+				AccessTokenSecret: TwitterAccessTokenSecret,
+				CallbackUrl:       "http://" + appengine.DefaultVersionHostname(ctx) + "" + UrlTwitterTokenCallback,
+				SecretSign:        appengine.VersionID(ctx),
+			},
+			userhundler.UserHandlerOnEvent{}, //
+			blobhandler.BlobHandlerOnEvent{
+				OnBlobRequest: func(w http.ResponseWriter, r *http.Request, input *miniprop.MiniProp, output *miniprop.MiniProp, h *blobhandler.BlobHandler) (string, map[string]string, error) {
+					ret := CheckLogin(r, input)
+					if ret.IsLogin == false {
+						return "", map[string]string{}, errors.New("Failed in token check")
+					}
+					return ret.AccessTokenObj.GetLoginId(), map[string]string{}, nil
 				},
 			})
 	}
@@ -103,11 +86,11 @@ func initApi() {
 	// twitter
 	http.HandleFunc(UrlTwitterTokenUrlRedirect, func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Add("Access-Control-Allow-Origin", "*")
-		GetTwitterHandlerObj(appengine.NewContext(r)).HandleLoginEntry(w, r)
+		GetUserHundlerObj(appengine.NewContext(r)).HandleTwitterRequestToken(w, r)
 	})
 	http.HandleFunc(UrlTwitterTokenCallback, func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Add("Access-Control-Allow-Origin", "*")
-		GetTwitterHandlerObj(appengine.NewContext(r)).HandleLoginExit(w, r)
+		GetUserHundlerObj(appengine.NewContext(r)).HandleTwitterCallbackToken(w, r)
 	})
 	// user
 	http.HandleFunc(UrlUserGet, func(w http.ResponseWriter, r *http.Request) {
