@@ -140,11 +140,7 @@ func initApi() {
 	// me
 	http.HandleFunc(UrlMeLogout, func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Add("Access-Control-Allow-Origin", "*")
-		bodyBytes, _ := ioutil.ReadAll(r.Body)
-		propObj := miniprop.NewMiniPropFromJson(bodyBytes)
-		token := propObj.GetString("token", "")
-		ctx := appengine.NewContext(r)
-		GetUserHundlerObj(ctx).GetSessionMgr().Logout(ctx, token, minisession.MakeAccessTokenConfigFromRequest(r))
+		GetUserHundlerObj(ctx).HandleLogout(r, w)
 	})
 
 	http.HandleFunc(UrlMeUpdate, func(w http.ResponseWriter, r *http.Request) {
