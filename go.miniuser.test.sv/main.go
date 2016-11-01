@@ -18,7 +18,7 @@ import (
 	"google.golang.org/appengine/log"
 	//
 
-	"io/ioutil"
+	//	"io/ioutil"
 )
 
 const (
@@ -140,7 +140,7 @@ func initApi() {
 	// me
 	http.HandleFunc(UrlMeLogout, func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Add("Access-Control-Allow-Origin", "*")
-		GetUserHundlerObj(ctx).HandleLogout(r, w)
+		GetUserHundlerObj(appengine.NewContext(r)).HandleLogout(w, r)
 	})
 
 	http.HandleFunc(UrlMeUpdate, func(w http.ResponseWriter, r *http.Request) {
