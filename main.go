@@ -12,6 +12,7 @@ import (
 
 	userhundler "github.com/firefirestyle/go.miniuser/handler"
 	//
+	"github.com/firefirestyle/go.minioauth/facebook"
 	"golang.org/x/net/context"
 	"google.golang.org/appengine"
 	"google.golang.org/appengine/log"
@@ -21,14 +22,16 @@ import (
 )
 
 const (
-	UrlTwitterTokenUrlRedirect = "/api/v1/twitter/tokenurl/redirect"
-	UrlTwitterTokenCallback    = "/api/v1/twitter/tokenurl/callback"
-	UrlUserGet                 = "/api/v1/user/get"
-	UrlUserFind                = "/api/v1/user/find"
-	UrlUserBlobGet             = "/api/v1/user/getblob"
-	UrlUserRequestBlobUrl      = "/api/v1/user/requestbloburl"
-	UrlUserCallbackBlobUrl     = "/api/v1/user/callbackbloburl"
-	UrlMeLogout                = "/api/v1/me/logout"
+	UrlTwitterTokenUrlRedirect  = "/api/v1/twitter/tokenurl/redirect"
+	UrlTwitterTokenCallback     = "/api/v1/twitter/tokenurl/callback"
+	UrlFacebookTokenUrlRedirect = "/api/v1/facebook/tokenurl/redirect"
+	UrlFacebookTokenCallback    = "/api/v1/facebook/tokenurl/callback"
+	UrlUserGet                  = "/api/v1/user/get"
+	UrlUserFind                 = "/api/v1/user/find"
+	UrlUserBlobGet              = "/api/v1/user/getblob"
+	UrlUserRequestBlobUrl       = "/api/v1/user/requestbloburl"
+	UrlUserCallbackBlobUrl      = "/api/v1/user/callbackbloburl"
+	UrlMeLogout                 = "/api/v1/me/logout"
 )
 
 var twitterHandlerObj *twitter.TwitterHandler = nil
@@ -42,6 +45,10 @@ func CheckLogin(r *http.Request, input *miniprop.MiniProp) minisession.CheckLogi
 
 func GetUserHundlerObj(ctx context.Context) *userhundler.UserHandler {
 	if userHandlerObj == nil {
+		v := appengine.DefaultVersionHostname(ctx)
+		if v == "127.0.0.1:8080" {
+			v = "localhost:8080"
+		}
 		userHandlerObj = userhundler.NewUserHandler(UrlUserCallbackBlobUrl,
 			userhundler.UserHandlerManagerConfig{ //
 				ProjectId:   "firefirestyle",
@@ -56,6 +63,12 @@ func GetUserHundlerObj(ctx context.Context) *userhundler.UserHandler {
 				AccessTokenSecret: TwitterAccessTokenSecret,
 				CallbackUrl:       "http://" + appengine.DefaultVersionHostname(ctx) + "" + UrlTwitterTokenCallback,
 				SecretSign:        appengine.VersionID(ctx),
+			}, //
+			facebook.FacebookOAuthConfig{
+				ConfigFacebookAppSecret: ConfigFacebookAppSecret,
+				ConfigFacebookAppId:     ConfigFacebookAppId,
+				SecretSign:              appengine.VersionID(ctx),
+				CallbackUrl:             "http://" + v + "" + UrlFacebookTokenCallback,
 			},
 			userhundler.UserHandlerOnEvent{}, //
 			blobhandler.BlobHandlerOnEvent{
@@ -91,6 +104,15 @@ func initApi() {
 	http.HandleFunc(UrlTwitterTokenCallback, func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Add("Access-Control-Allow-Origin", "*")
 		GetUserHundlerObj(appengine.NewContext(r)).HandleTwitterCallbackToken(w, r)
+	})
+	// facebook
+	http.HandleFunc(UrlFacebookTokenUrlRedirect, func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Add("Access-Control-Allow-Origin", "*")
+		GetUserHundlerObj(appengine.NewContext(r)).HandleFacebookRequestToken(w, r)
+	})
+	http.HandleFunc(UrlFacebookTokenCallback, func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Add("Access-Control-Allow-Origin", "*")
+		GetUserHundlerObj(appengine.NewContext(r)).HandleFacebookCallbackToken(w, r)
 	})
 	// user
 	http.HandleFunc(UrlUserGet, func(w http.ResponseWriter, r *http.Request) {
