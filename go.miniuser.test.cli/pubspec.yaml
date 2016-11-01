@@ -1,0 +1,17 @@
+name: firefirestyle.cl
+description: web client
+version: 0.0.1
+dependencies:
+ browser: any
+ cookie: any
+ crypto: any
+ firefirestyle.location:
+   git:
+     url: https://github.com/firefirestyle/dart.location.git
+ firefirestyle.cl.netbox:
+   path: ../..//appspot.cl.netbox
+ firefirestyle.httprequest:
+   path: ../../dart.httprequest
+ dart_to_js_script_rewriter: any
+transforms:
+- dart_to_js_script_rewriter
