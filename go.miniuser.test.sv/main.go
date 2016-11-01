@@ -32,6 +32,7 @@ const (
 	UrlUserRequestBlobUrl       = "/api/v1/user/requestbloburl"
 	UrlUserCallbackBlobUrl      = "/api/v1/user/callbackbloburl"
 	UrlMeLogout                 = "/api/v1/me/logout"
+	UrlMeUpdate                 = "/api/v1/me/update"
 )
 
 var twitterHandlerObj *twitter.TwitterHandler = nil
@@ -144,6 +145,11 @@ func initApi() {
 		token := propObj.GetString("token", "")
 		ctx := appengine.NewContext(r)
 		GetUserHundlerObj(ctx).GetSessionMgr().Logout(ctx, token, minisession.MakeAccessTokenConfigFromRequest(r))
+	})
+
+	http.HandleFunc(UrlMeUpdate, func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Add("Access-Control-Allow-Origin", "*")
+		GetUserHundlerObj(appengine.NewContext(r)).HandleUpdateInfo(w, r)
 	})
 
 }

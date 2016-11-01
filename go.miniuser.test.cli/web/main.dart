@@ -56,6 +56,8 @@ showUserInfo(String userName) async {
         """<br>""",
         """<div>Created : ${userInfo.created}</div>""", //
         """<div>Point : ${userInfo.point}</div>""", //
+        """<div>Content : ${userInfo.content}</div>""", //
+        """<div>Sign : ${userInfo.sign}</div>""", //
         """<div>PublicInfo : ${userInfo.publicInfo}</div>""", //
         """<div>PrivateInfo : ${userInfo.privateInfo}</div>""", //
         """<div>IconUrl : ${userInfo.iconUrl}</div>""", //
@@ -69,11 +71,15 @@ showUserInfo(String userName) async {
 showUserEdit(String userName) async {
   nbox.UserInfoProp userInfo = await userNbox.getUserInfo(userName);
   var cont = new html.Element.html("""<div></div>""");
-  var displaynameCont = new html.Element.html("""<input type="text" value="${userInfo.displayName}" placeholder="display name">""",treeSanitizer: html.NodeTreeSanitizer.trusted);
-  var userInfoCont = new html.Element.html("""<input type="text" value="${userInfo.publicInfo}" placeholder="public info">""",treeSanitizer: html.NodeTreeSanitizer.trusted);
-  var button = new html.Element.html("""<button>Update</button>""");
-  cont.children.add(displaynameCont);
-  cont.children.add(userInfoCont);
-  cont.children.add(button);
+  html.InputElement displaynameElm = new html.Element.html("""<input type="text" value="${userInfo.displayName}" placeholder="display name">""",treeSanitizer: html.NodeTreeSanitizer.trusted);
+  html.InputElement contentElm = new html.Element.html("""<input type="text" value="${userInfo.content}" placeholder="content">""",treeSanitizer: html.NodeTreeSanitizer.trusted);
+  var buttonElm = new html.Element.html("""<button>Update</button>""");
+  cont.children.add(displaynameElm);
+  cont.children.add(contentElm);
+  cont.children.add(buttonElm);
   html.document.body.children.add(cont);
+
+  buttonElm.onClick.listen((ev) async {
+   nbox.UserInfoProp nextUser = await meNbox.updateUserInfo(accessToken, userName,displayName: displaynameElm.value, cont: contentElm.value);
+  });
 }
