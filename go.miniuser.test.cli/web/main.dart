@@ -2,8 +2,10 @@ import 'package:firefirestyle.cl.netbox/netbox.dart' as nbox;
 import 'package:firefirestyle.httprequest/request.dart' as nbox;
 import 'package:firefirestyle.httprequest/request_ver_html.dart' as nbox;
 import 'package:firefirestyle.location/location_html.dart' as loc;
+import 'package:firefirestyle.dialog/dialog.dart' as dialog;
 //
 import 'dart:html' as html;
+import 'dart:convert' as conv;
 
 const String CONFIG_BACKEND_ADDR = "http://localhost:8080";
 
@@ -65,6 +67,10 @@ showUserInfo(String userName) async {
         """</div>""",
       ].join("\r\n"), //
       treeSanitizer: html.NodeTreeSanitizer.trusted));
+  if(userInfo.iconUrl != "") {
+    var elm = new html.Element.html("""<img src="${await userNbox.makeUserBlobUrlFromKey(userInfo.iconUrl)}">""", treeSanitizer: html.NodeTreeSanitizer.trusted);
+    html.document.body.children.add(elm);
+  }
 }
 
 
@@ -73,13 +79,23 @@ showUserEdit(String userName) async {
   var cont = new html.Element.html("""<div></div>""");
   html.InputElement displaynameElm = new html.Element.html("""<input type="text" value="${userInfo.displayName}" placeholder="display name">""",treeSanitizer: html.NodeTreeSanitizer.trusted);
   html.InputElement contentElm = new html.Element.html("""<input type="text" value="${userInfo.content}" placeholder="content">""",treeSanitizer: html.NodeTreeSanitizer.trusted);
-  var buttonElm = new html.Element.html("""<button>Update</button>""");
+  var updateButtonElm = new html.Element.html("""<button>Update</button>""");
+  var imageButtonElm = new html.Element.html("""<button>Image</button>""");
+
   cont.children.add(displaynameElm);
   cont.children.add(contentElm);
-  cont.children.add(buttonElm);
+  cont.children.add(updateButtonElm);
+  cont.children.add(imageButtonElm);
   html.document.body.children.add(cont);
 
-  buttonElm.onClick.listen((ev) async {
+  updateButtonElm.onClick.listen((ev) async {
    nbox.UserInfoProp nextUser = await meNbox.updateUserInfo(accessToken, userName,displayName: displaynameElm.value, cont: contentElm.value);
+  });
+
+  imageButtonElm.onClick.listen((ev) async {
+    var imgDialog = new dialog.ImgageDialog();
+    var imgSrc = await imgDialog.show();
+    var imgBytes = conv.BASE64.decode(imgSrc.replaceFirst(new RegExp(".*,"), ''));
+    meNbox.updateIcon(accessToken, userName, imgBytes);
   });
 }

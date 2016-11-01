@@ -9,9 +9,11 @@ dependencies:
    git:
      url: https://github.com/firefirestyle/dart.location.git
  firefirestyle.cl.netbox:
-   path: ../..//appspot.cl.netbox
+   path: ../../appspot.cl.netbox
  firefirestyle.httprequest:
    path: ../../dart.httprequest
+ firefirestyle.dialog:
+   path: ../../dart.dialog
  dart_to_js_script_rewriter: any
 transforms:
 - dart_to_js_script_rewriter
