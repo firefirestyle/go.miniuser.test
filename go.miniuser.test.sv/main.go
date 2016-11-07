@@ -6,6 +6,7 @@ import (
 	userTmp "github.com/firefirestyle/go.miniuser/template"
 )
 
+/*
 var userConfig = userTmp.UserTemplateConfig{
 	TwitterConsumerKey:       "dummy",
 	TwitterConsumerSecret:    "dummy",
@@ -17,7 +18,7 @@ var userConfig = userTmp.UserTemplateConfig{
 	KindBaseName:             "FFUser",
 	AllowInvalidSSL:          true,
 }
-
+*/
 var userTemplate = userTmp.NewUserTemplate(userConfig)
 
 func init() {
